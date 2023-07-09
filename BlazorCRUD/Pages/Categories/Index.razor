@@ -1,0 +1,114 @@
+﻿@page "/categories/"
+@using BlazorCRUD.Data;
+@using BlazorCRUD.Data.Models;
+@inject NavigationManager navManager;
+@inject CategoryRepo categoryRepo
+
+<PageTitle>Categories</PageTitle>
+
+    <FluentBreadcrumb>
+        <FluentBreadcrumbItem Href="/">Home</FluentBreadcrumbItem>
+        <FluentBreadcrumbItem>Categories</FluentBreadcrumbItem>
+    </FluentBreadcrumb>
+<br />
+<Stack Orientation="Orientation.Horizontal" VerticalAlignment="StackVerticalAlignment.Center">
+    Add new
+    <FluentButton @onclick="Add">
+    <FluentIcon Name="@FluentIcons.AddCircle" Size="@IconSize.Size24" Variant="@IconVariant.Regular" Color="@Color.Accent" />
+    </FluentButton>
+</Stack>
+<br />
+    <FluentDataGrid RowsData="@categories" Pagination="@pagination" >
+    <PropertyColumn Property="@(p => p.Description)" Sortable="true" >
+         <ColumnOptions>
+            <div class="search-box">
+                    <FluentSearch type="search" Autofocus=true @bind-Value=filter @oninput="HandleFilter" @onchange="HandleFilterClear" Placeholder="Search..." />
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <TemplateColumn>
+            <FluentButton @onclick="@(() => Edit(context.CategoryId))">
+                <FluentIcon Name="@FluentIcons.Edit" Size="IconSize.Size20"></FluentIcon>
+            </FluentButton>
+    </TemplateColumn>
+    <TemplateColumn>
+            <FluentButton @onclick="@(() => Delete(context.CategoryId))">
+                <FluentIcon Name="@FluentIcons.Delete" Size="@IconSize.Size20" Variant="@IconVariant.Filled" Color="@Color.Error" />
+            </FluentButton>
+    </TemplateColumn>
+</FluentDataGrid>
+<FluentPaginator State="@pagination" />
+
+
+<div>
+    <FluentDialog @ref="errorDialog" aria-label="Error dialog" Modal="true" TrapFocus="true" @ondialogdismiss=DismissError Hidden="@errorHidden" >
+        <h2>Error</h2>
+        <p>It is not possible to delete a Category with associated Items.</p>
+    </FluentDialog>
+</div>
+
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+
+    string filter = string.Empty;
+
+    IQueryable<Category>? categories; 
+
+    private FluentDialog? errorDialog;
+
+    private bool errorHidden = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = (await categoryRepo.GetAllAsync()).AsQueryable();
+    }
+        private async Task HandleFilter(ChangeEventArgs args)
+    {
+        if (args.Value is string value)
+        {
+            filter = value;
+
+            categories = (await categoryRepo.FilterByDescriptionAsync(filter)).AsQueryable();
+        }
+    }
+
+    private async Task HandleFilterClear(ChangeEventArgs args)
+    {
+        if (args is not null && string.IsNullOrWhiteSpace(args.Value?.ToString()))
+        {
+            filter = string.Empty;
+
+            categories = (await categoryRepo.GetAllAsync()).AsQueryable();
+        }
+    }
+
+    private async Task Add()
+    {
+        navManager.NavigateTo("/categories/new");
+    }
+
+    private void Edit(long id)
+    {
+        navManager.NavigateTo($"/categories/edit/{id}");
+    }
+
+    private async Task Delete(long id)
+    {
+        var items = await categoryRepo.GetItemsAsync(id);
+
+        if (items.Any())
+        {
+            errorHidden = false;
+        }
+        else
+        {
+            _ = categoryRepo.DeleteAsync(id);
+            categories = categories.Where(i => i.CategoryId != id);
+        }
+    }
+
+    private void DismissError()
+    {
+        errorHidden = true;
+    }
+}

@@ -1,0 +1,67 @@
+﻿@page "/items/edit/{itemId:int}"
+@using BlazorCRUD.Data;
+@using BlazorCRUD.Data.Models;
+@inject ItemRepo _itemRepo;
+@inject CategoryRepo _categoryRepo;
+@inject NavigationManager navManager;
+
+<PageTitle>Categorie - Modifica</PageTitle>
+@if (currentItem is not null)
+{
+    <FluentBreadcrumb>
+        <FluentBreadcrumbItem Href="/">Home</FluentBreadcrumbItem>
+        <FluentBreadcrumbItem Href="/items/">Items</FluentBreadcrumbItem>
+        <FluentBreadcrumbItem>@currentItem.Description</FluentBreadcrumbItem>
+    </FluentBreadcrumb>
+
+    <Stack Orientation="Orientation.Horizontal" VerticalAlignment="StackVerticalAlignment.Center">
+        <FluentTextField @bind-Value=currentItem.Description>Description</FluentTextField>
+        <FluentNumberField @bind-Value=currentItem.Value>Value</FluentNumberField>
+        <Stack Orientation="Orientation.Vertical">
+            Category
+            <FluentSelect Title="Categoria" TOption="Category" Items="@categories" Id="category-listbox" OptionValue="@(c=> c.CategoryId.ToString())"
+                          OptionText="@(c => c.Description)" @bind-SelectedOption="@selectedCategory" />
+        </Stack>
+    </Stack>
+
+    <Stack>
+    <FluentButton @onclick=SaveAndBack>Save and go back</FluentButton>
+    </Stack>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+
+    [Parameter] 
+    public int itemId { get; set; }
+
+    Category selectedCategory;
+
+    Item currentItem;
+
+    IEnumerable<Category> categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (categories is null)
+            categories = await _categoryRepo.GetAllAsync();
+
+        if (currentItem is null)
+        {
+            currentItem = await _itemRepo.GetByIdAsync(itemId);
+            selectedCategory = currentItem.Category;
+        }
+        
+    }
+
+    private async Task SaveAndBack()
+    {
+        currentItem.Category = selectedCategory;
+        await _itemRepo.UpdateAsync(currentItem);
+
+        navManager.NavigateTo("/items/");
+    }
+}

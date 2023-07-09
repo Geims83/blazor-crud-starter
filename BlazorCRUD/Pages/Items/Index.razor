@@ -1,0 +1,87 @@
+﻿@page "/items/"
+@using BlazorCRUD.Data;
+@using BlazorCRUD.Data.Models;
+@inject ItemRepo _itemRepo;
+@inject NavigationManager navManager;
+
+<PageTitle>Items</PageTitle>
+
+<FluentBreadcrumb>
+    <FluentBreadcrumbItem Href="/">Home</FluentBreadcrumbItem>
+    <FluentBreadcrumbItem Href="/items/">Items</FluentBreadcrumbItem>
+</FluentBreadcrumb>
+<br />
+<Stack Orientation="Orientation.Horizontal" VerticalAlignment="StackVerticalAlignment.Center" HorizontalGap="10">
+    Add new
+    <FluentButton @onclick="Add">
+    <FluentIcon Name="@FluentIcons.AddCircle" Size="@IconSize.Size24" Variant="@IconVariant.Regular" Color="@Color.Accent" />
+    </FluentButton>
+</Stack>
+<br />
+<FluentDataGrid RowsData="@Items" Pagination="@pagination">
+    <PropertyColumn Property="@(p => p.Description)" Sortable="true" >
+         <ColumnOptions>
+            <div class="search-box">
+                    <FluentSearch type="search" Autofocus=true @bind-Value=filter @oninput="HandleFilter" @onchange="HandleFilterClear" Placeholder="Search..." />
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn Property="@(p => p.Value)" Sortable="true" />
+    <PropertyColumn Title="Category" Property="@(p => p.Category.Description)" Sortable="true" />
+    <TemplateColumn>
+            <FluentButton @onclick="@(() => Edit(context.ItemId))">
+                <FluentIcon Name="@FluentIcons.Edit" Size="IconSize.Size20"></FluentIcon>
+            </FluentButton>
+    </TemplateColumn>
+    <TemplateColumn>
+            <FluentButton @onclick="@(() => Delete(context.ItemId))">
+                <FluentIcon Name="@FluentIcons.Delete" Size="@IconSize.Size20" Variant="@IconVariant.Filled" Color="@Color.Error" />
+            </FluentButton>
+    </TemplateColumn>
+</FluentDataGrid>
+<FluentPaginator State="@pagination" />
+
+
+@code {
+
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+
+    string filter = string.Empty;
+
+    IQueryable<Item>? Items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Items = (await _itemRepo.GetAllAsync()).AsQueryable();
+    }
+
+    private async Task HandleFilter(ChangeEventArgs args)
+    {
+        if (args.Value is string value)
+        {
+            filter = value;
+
+            Items = (await _itemRepo.FilterByDescriptionAsync(filter)).AsQueryable();
+        }
+    }
+
+    private async Task HandleFilterClear(ChangeEventArgs args)
+    {
+        if (args is not null && string.IsNullOrWhiteSpace(args.Value?.ToString()))
+        {
+            filter = string.Empty;
+
+            Items = (await _itemRepo.GetAllAsync()).AsQueryable();
+        }
+    }
+
+    private async Task Add() => navManager.NavigateTo("/items/new");
+
+    private async Task Edit(int selected) => navManager.NavigateTo($"/items/edit/{selected}");
+
+    private async Task Delete(int selected)
+    {
+        var toDelete = await _itemRepo.DeleteAsync(selected);
+        Items = Items.Where(i => i.ItemId != selected);
+    }
+}

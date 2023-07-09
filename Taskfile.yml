@@ -1,0 +1,30 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task -l
+    silent: true
+  db:
+    cmds:
+      - task: db:build
+      - task: db:up  
+  db:build:
+    cmds:
+      - docker compose -f deploy-db.yml build
+  db:up:
+    deps:
+      - db:build
+    cmds:
+      - docker compose -f deploy-db.yml up
+  db:stop:
+    cmds:
+      - docker compose -f deploy-db.yml down
+  app:
+    cmds:
+    - task: app:build
+  app:build:
+    dir: BlazorCRUD/
+    cmd: dotnet build .

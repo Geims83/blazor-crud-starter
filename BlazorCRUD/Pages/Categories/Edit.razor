@@ -1,0 +1,46 @@
+﻿@page "/categories/edit/{categoryId:int}"
+@using BlazorCRUD.Data;
+@using BlazorCRUD.Data.Models;
+@inject NavigationManager navManager;
+@inject CategoryRepo _categoryRepo;
+
+<PageTitle>Categories - Edit</PageTitle>
+@if (currentCategory is not null)
+{
+    <FluentBreadcrumb>
+        <FluentBreadcrumbItem Href="/">Home</FluentBreadcrumbItem>
+        <FluentBreadcrumbItem Href="/categories/">Categories</FluentBreadcrumbItem>
+        <FluentBreadcrumbItem>@currentCategory.Description</FluentBreadcrumbItem>
+    </FluentBreadcrumb>
+
+    <Stack>
+        <FluentTextField @bind-Value=currentCategory.Description>Category Description</FluentTextField>
+    </Stack>
+
+    <Stack>
+        <FluentButton @onclick=SaveAndBack>Save and go back</FluentButton>
+    </Stack>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+
+    [Parameter] 
+    public int categoryId { get; set; }
+
+    Category currentCategory;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentCategory = await _categoryRepo.GetByIdAsync(categoryId);
+    }
+
+    private async Task SaveAndBack()
+    {
+        await _categoryRepo.UpdateAsync(currentCategory);
+        navManager.NavigateTo("/categories/");
+    }
+}

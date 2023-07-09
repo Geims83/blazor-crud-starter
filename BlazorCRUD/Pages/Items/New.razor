@@ -1,0 +1,68 @@
+﻿@page "/items/new"
+@using BlazorCRUD.Data;
+@using BlazorCRUD.Data.Models;
+@inject ItemRepo itemRepo;
+@inject CategoryRepo categoryRepo;
+@inject NavigationManager navManager;
+
+<PageTitle>Items - New</PageTitle>
+
+<FluentBreadcrumb>
+    <FluentBreadcrumbItem Href="/">Home</FluentBreadcrumbItem>
+    <FluentBreadcrumbItem Href="/items/">Items</FluentBreadcrumbItem>
+    <FluentBreadcrumbItem>New</FluentBreadcrumbItem>
+</FluentBreadcrumb>
+
+<Stack Orientation="Orientation.Horizontal" VerticalAlignment="StackVerticalAlignment.Center" HorizontalGap="20">
+<FluentTextField @bind-Value=currentItem.Description>Description</FluentTextField>
+<FluentNumberField @bind-Value=currentItem.Value>Value</FluentNumberField>
+    <Stack Orientation="Orientation.Vertical">
+    Category
+    <FluentSelect Title="Categoria" TOption="Category" Items="@categories" Id="category-listbox" OptionValue="@(c=> c.CategoryId.ToString())"
+        OptionText="@(c => c.Description)" @bind-SelectedOption="@selectedCategory" />
+    </Stack>
+</Stack>
+
+<Stack>
+<FluentButton @onclick=SaveAndBack>Save and go back</FluentButton>
+<FluentButton @onclick=SaveAndNew>Save and add another</FluentButton>
+</Stack>
+
+@code {
+    
+    Item currentItem = new();
+
+    Category selectedCategory;
+
+    IEnumerable<Category> categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (categories is null)
+            categories = await categoryRepo.GetAllAsync();
+
+        selectedCategory = categories.FirstOrDefault();
+    }
+
+    private async Task SaveAndBack()
+    {
+        if (selectedCategory is not null)
+        {
+            currentItem.Category = selectedCategory;
+            _ = await itemRepo.AddAsync(currentItem);
+        }
+
+        navManager.NavigateTo("/items/");
+    }
+
+    private async Task SaveAndNew()
+    {
+        if (selectedCategory is not null)
+        {
+            currentItem.Category = selectedCategory;
+            _ = await itemRepo.AddAsync(currentItem);
+        }
+
+        currentItem = new();
+    }
+}

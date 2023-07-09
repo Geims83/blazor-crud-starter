@@ -1,0 +1,44 @@
+﻿@page "/categories/new"
+@using BlazorCRUD.Data;
+@using BlazorCRUD.Data.Models;
+@inject NavigationManager navManager;
+@inject CategoryRepo _categoryRepo;
+
+<PageTitle>Categories - New</PageTitle>
+
+<FluentBreadcrumb>
+    <FluentBreadcrumbItem Href="/">Home</FluentBreadcrumbItem>
+    <FluentBreadcrumbItem Href="/categories/">Categories</FluentBreadcrumbItem>
+    <FluentBreadcrumbItem>New</FluentBreadcrumbItem>
+</FluentBreadcrumb>
+
+<Stack>
+    <FluentTextField @bind-Value=category.Description>Category Description</FluentTextField>
+</Stack>
+
+<Stack>
+    <FluentButton @onclick=SaveAndBack>Save and go back</FluentButton>
+    <FluentButton @onclick=SaveAndNew>Save and add another</FluentButton>
+</Stack>
+
+@code {
+
+    Category category = new Category();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    private async Task SaveAndBack()
+    {
+        await _categoryRepo.AddAsync(category);
+        navManager.NavigateTo("/categories/");
+    }
+
+    private async Task SaveAndNew()
+    {
+        await _categoryRepo.AddAsync(category);
+        category = new Category();
+    }
+}
